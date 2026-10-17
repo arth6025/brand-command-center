@@ -95,10 +95,20 @@ export function LineChart({ series, labels, height = 220, format, minY0 = true, 
           if (!d) return null;
           const firstI = s.values.findIndex((v) => v !== null);
           const lastI = s.values.length - 1 - [...s.values].reverse().findIndex((v) => v !== null);
-          return <path key={`a-${s.id}`} d={`${d}L${x(lastI)},${y(minV)}L${x(firstI)},${y(minV)}Z`} fill={s.color} opacity={0.1} />;
+          return (
+            <g key={`a-${s.id}-${labels.length}-${labels[0]}`} className="area-in">
+              <defs>
+                <linearGradient id={`grad-${s.id}`} x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0" stopColor={s.color} stopOpacity="0.32" />
+                  <stop offset="1" stopColor={s.color} stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <path d={`${d}L${x(lastI)},${y(minV)}L${x(firstI)},${y(minV)}Z`} fill={`url(#grad-${s.id})`} />
+            </g>
+          );
         })}
         {[...series].sort((a, b) => Number(!!b.muted) - Number(!!a.muted)).map((s) => (
-          <path key={s.id} d={path(s.values)} fill="none" stroke={s.color} strokeWidth={s.muted ? 1.5 : 2} strokeLinejoin="round" strokeLinecap="round" />
+          <path key={`${s.id}-${labels.length}-${labels[0]}`} className="draw" pathLength={1} d={path(s.values)} fill="none" stroke={s.color} strokeWidth={s.muted ? 1.5 : 2} strokeLinejoin="round" strokeLinecap="round" style={s.muted ? undefined : { filter: `drop-shadow(0 0 6px ${s.color})` }} />
         ))}
         {primary && lastIdx !== undefined && hover === null && (
           <circle cx={x(lastIdx)} cy={y(primary.values[lastIdx]!)} r={4} fill={primary.color} stroke="var(--surface)" strokeWidth={2} />

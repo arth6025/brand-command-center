@@ -3,7 +3,9 @@ import { ago } from './metrics/format';
 import { PRESETS, type PresetId } from './metrics/range';
 import { NAV } from './nav';
 import { type RouteId, useApp } from './state/app';
+import { NavIcon } from './ui/icons';
 import { Seg } from './ui/kit';
+import { useSpotlight } from './ui/motion';
 import { AskDrawer, CommandPalette, CustomRange, MetricDrawer } from './ui/overlays';
 
 const PAGES: Record<RouteId, React.LazyExoticComponent<() => JSX.Element>> = {
@@ -30,6 +32,7 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [customOpen, setCustomOpen] = useState(false);
   const health = engine.health.summary();
+  useSpotlight();
   const recCount = engine.recommendations(range).filter((r) => !app.decisions.some((d) => d.recId === r.id)).length;
 
   useEffect(() => {
@@ -44,6 +47,8 @@ export default function App() {
   const syncDot = health.staleIds.length ? 'warn' : '';
 
   return (
+    <>
+    <div className="ambient" aria-hidden="true"><div className="floor" /></div>
     <div className="app">
       <nav className={`sidebar ${menuOpen ? 'open' : ''}`} aria-label="Main">
         <div className="brand">
@@ -61,6 +66,7 @@ export default function App() {
                 key={i.id} href={`#/${i.id}`} className="nav-item" aria-current={route === i.id ? 'page' : undefined}
                 onClick={(e) => { e.preventDefault(); navigate(i.id); setMenuOpen(false); }}
               >
+                <NavIcon id={i.id} />
                 {i.label}
                 {i.isNew && <span className="nav-new">NEW</span>}
                 {i.id === 'recommendations' && recCount > 0 && <span className="count">{recCount}</span>}
@@ -98,7 +104,7 @@ export default function App() {
           <button className="btn primary" onClick={() => setAskOpen(true)}>✦ Ask</button>
         </header>
 
-        <main className="content">
+        <main className="content page-enter" key={route}>
           <Suspense fallback={<div className="empty">Loading…</div>}>
             <Page />
           </Suspense>
@@ -111,5 +117,6 @@ export default function App() {
       {customOpen && <CustomRange onClose={() => setCustomOpen(false)} />}
       {toast && <div className="toast" role="status">{toast}</div>}
     </div>
+    </>
   );
 }

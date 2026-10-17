@@ -1,15 +1,18 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { forwardRef, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { CONNECTOR_BY_ID } from '../connectors/registry';
 import { delta as deltaOf, pct } from '../metrics/format';
 import { useApp } from '../state/app';
+import { CountUp, Sparkline, useTilt } from './motion';
 
-export function Card({ children, className = '', onClick, title }: { children: ReactNode; className?: string; onClick?: () => void; title?: string }) {
-  return (
-    <section className={`card ${className}`} onClick={onClick} title={title}>
-      {children}
-    </section>
-  );
-}
+export const Card = forwardRef<HTMLElement, { children: ReactNode; className?: string; onClick?: () => void; title?: string }>(
+  function Card({ children, className = '', onClick, title }, ref) {
+    return (
+      <section ref={ref} className={`card ${className}`} onClick={onClick} title={title}>
+        {children}
+      </section>
+    );
+  },
+);
 
 export function CardHead({ title, sub, tools }: { title: ReactNode; sub?: ReactNode; tools?: ReactNode }) {
   return (
@@ -57,26 +60,44 @@ export function Delta({ cur, prev, upIsGood = true, suffix = 'vs prev' }: { cur:
   );
 }
 
-export function Stat({ label, value, foot, source, metric, big, onClick, valueClass = '' }: {
+export function Stat({ label, value, foot, source, metric, big, onClick, valueClass = '', spark }: {
   label: ReactNode; value: ReactNode; foot?: ReactNode; source?: string; metric?: string; big?: boolean; onClick?: () => void; valueClass?: string;
+  /** Optional trend values drawn as a sparkline under the figure. */
+  spark?: number[];
 }) {
   const { openMetric } = useApp();
+  const tilt = useTilt<HTMLElement>(7);
   const click = onClick ?? (metric ? () => openMetric(metric) : undefined);
   return (
-    <Card className={`stat ${click ? 'clickable' : ''}`} onClick={click}>
+    <Card ref={tilt} className={`stat ${click ? 'clickable' : ''}`} onClick={click}>
       <div className="stat-top">
         <span className="stat-label">{label}</span>
         {source && <SourceChip label={source} metric={metric} />}
       </div>
-      <div className={`stat-value ${big ? 'big' : ''} ${valueClass}`}>{value}</div>
+      <div className={`stat-value ${big ? 'big' : ''} ${valueClass}`}>{typeof value === 'string' ? <CountUp value={value} /> : value}</div>
+      {spark && <Sparkline values={spark} />}
       {foot && <div className="stat-foot">{foot}</div>}
     </Card>
   );
 }
 
 export function Seg<T extends string>({ options, value, onChange, small, label }: { options: { id: T; label: ReactNode }[]; value: T; onChange: (v: T) => void; small?: boolean; label: string }) {
+  const wrap = useRef<HTMLDivElement>(null);
+  const [pill, setPill] = useState<{ left: number; width: number } | null>(null);
+  // Slide a highlight under the selected option
+  useLayoutEffect(() => {
+    const measure = () => {
+      const el = wrap.current?.querySelector<HTMLButtonElement>('button[aria-pressed="true"]');
+      setPill(el ? { left: el.offsetLeft, width: el.offsetWidth } : null);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (wrap.current) ro.observe(wrap.current);
+    return () => ro.disconnect();
+  }, [value, options.length]);
   return (
-    <div className={`seg ${small ? 'small' : ''}`} role="group" aria-label={label}>
+    <div ref={wrap} className={`seg ${small ? 'small' : ''}`} role="group" aria-label={label}>
+      {pill && <span className="seg-pill" style={{ left: pill.left, width: pill.width }} aria-hidden="true" />}
       {options.map((o) => (
         <button key={o.id} type="button" aria-pressed={o.id === value} onClick={() => onChange(o.id)}>{o.label}</button>
       ))}

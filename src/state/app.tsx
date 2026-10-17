@@ -72,7 +72,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [askOpen, setAskOpen] = useState(false);
   const [askSeed, setAskSeed] = useState('');
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [theme, setThemeState] = useState<'system' | 'light' | 'dark'>(() => load('theme', 'system'));
+  const [theme, setThemeState] = useState<'system' | 'light' | 'dark'>(() => load('theme', 'dark'));
   const [decisions, setDecisions] = useState<Decision[]>(() => load('decisions', []));
   const [toast, setToast] = useState<string | null>(null);
 

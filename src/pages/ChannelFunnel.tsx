@@ -25,7 +25,7 @@ function loadReports(): SavedReport[] {
     && Array.isArray((r as SavedReport).metrics) && (r as SavedReport).metrics.every((m) => METRIC_IDS.has(m)));
 }
 
-const ON = { background: 'var(--ink)', color: 'var(--surface)', borderColor: 'var(--ink)', cursor: 'pointer' };
+const ON = { background: 'var(--accent-wash)', color: 'var(--ink)', borderColor: 'var(--accent)', fontWeight: 600, cursor: 'pointer' };
 const OFF = { cursor: 'pointer' };
 
 /**
