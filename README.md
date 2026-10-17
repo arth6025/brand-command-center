@@ -103,6 +103,13 @@ npm run ask-server   # optional: Claude-backed Ask on :8787 (needs ANTHROPIC_API
 
 ---
 
+## Deploy on Vercel
+
+1. In Vercel: **Add New → Project → Import** `arth6025/brand-command-center` (install the Vercel GitHub app on the account if the repo isn't listed).
+2. Settings are read from `vercel.json`: framework Vite, install `npm ci`, build `npm run build`, output `dist`. Node 20 or 22.
+3. Optional, for Claude-backed Ask: add the environment variable `ANTHROPIC_API_KEY`. The functions in `api/` serve `/api/ask` and `/api/health`; without the key, Ask answers locally from the same numbers.
+4. Deploy. Every push to `main` redeploys.
+
 ## 4. How it is built
 
 ```
@@ -124,7 +131,9 @@ src/metrics/             pure metric engine, memoised per date range
 src/ask/answer.ts        builds the computed-numbers payload for Ask; local answerer
 src/pages/               one file per screen
 src/ui/ src/charts/      shared components (no UI framework; hand-rolled SVG charts)
-server/ask-proxy.mjs     keeps the Anthropic key server-side
+server/ask-core.mjs      Ask logic (keeps the Anthropic key server-side)
+server/ask-proxy.mjs     local Ask server for development
+api/                     Vercel functions: /api/ask, /api/health
 ```
 
 Stack: React 18, TypeScript (strict), Vite 5, Vitest. No runtime dependencies beyond React,

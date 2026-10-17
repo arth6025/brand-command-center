@@ -75,7 +75,7 @@ The app reads one `Warehouse` object through `src/data/source.ts`.
 ### 4. Deploy
 
 - **Front end:** static build (`npm run build` → `dist/`) on Vercel, Netlify, Cloudflare Pages or S3 + CloudFront. It uses hash routing, so no server rewrites are needed.
-- **Ask proxy:** `server/ask-proxy.mjs` is a dependency-free Node HTTP server (only `@anthropic-ai/sdk`). Run it as a serverless function or a small container behind the same auth. Route `/api/*` to it (Vite does this in dev, see `vite.config.ts`). Env: `ANTHROPIC_API_KEY`, `PORT`. It uses Claude Opus 5.5 with server-side refusal fallback; the system prompt restricts answers to the numbers it receives.
+- **Ask:** logic lives in `server/ask-core.mjs`. On Vercel it runs as the functions in `api/` (set `ANTHROPIC_API_KEY`); elsewhere run `server/ask-proxy.mjs` as a small Node service behind the same auth. Route `/api/*` to it (Vite does this in dev, see `vite.config.ts`). Env: `ANTHROPIC_API_KEY`, `PORT`. It uses Claude Opus 5.5 with server-side refusal fallback; the system prompt restricts answers to the numbers it receives.
 - **CI:** a ready GitHub Actions workflow is in `docs/ci.example.yml` (build + tests on every PR). Move it to `.github/workflows/ci.yml` and push from an account with workflow permission; it was kept out of the first push because the pushing token lacked the `workflow` scope.
 
 ### 5. Governance inputs the business must supply
