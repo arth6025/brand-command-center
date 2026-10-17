@@ -42,11 +42,12 @@ decisions made on incomplete data.
 1. **One contribution ladder is the source of truth.** Net revenue → COGS → GM → freight, RTO, fees, commissions, packaging → CM1 → ad spend → CM2. Break-even MER is `1 ÷ CM1%`, taken from that same ladder, so the headline and the detail always agree.
 2. **Gaps are shown, never filled.** An unset packaging cost shows as "not set", not ₹0. A SKU missing from the cost sheet lowers the cost-coverage figure instead of being guessed. A SKU with no stock feed is "unknown", not zero.
 3. **Real charges where they exist, governed rates otherwise**, and the screen says what share is real.
-4. **Two attribution lenses, never added together.** Platform-claimed and last-click ROAS sit side by side; campaign verdicts read the geometric mean of the two against break-even.
-5. **Every number has one registered definition** (formula, sources, timezone, caveats, change log) that opens from its card.
-6. **Freshness is computed** from each connector's last run, never set by hand, so nobody reads a verdict off stale data.
-7. **Decisions are signed off by a person.** The system recommends with its working shown; it never moves spend.
-8. **The AI assistant answers only from computed numbers**, never free SQL, never estimates.
+4. **Profit changes are explained, not just reported.** The CM2 bridge splits the change into demand, gross margin, logistics, marketplace fees and ad spend, and the pieces sum exactly to the change.
+5. **Two attribution lenses, never added together.** Platform-claimed and last-click ROAS sit side by side; campaign verdicts read the geometric mean of the two against break-even.
+6. **Every number has one registered definition** (formula, sources, timezone, caveats, change log) that opens from its card.
+7. **Freshness is computed** from each connector's last run, never set by hand, so nobody reads a verdict off stale data.
+8. **Decisions are signed off by a person.** The system recommends with its working shown; it never moves spend.
+9. **The AI assistant answers only from computed numbers**, never free SQL, never estimates.
 
 ---
 
@@ -57,7 +58,7 @@ screens the mock-ups did not have: Revenue reconciliation and Connectors.
 
 | Screen | Answers |
 |---|---|
-| Overview | Blended vs break-even MER, the contribution ladder, KPIs, revenue trend, channel ROAS in two lenses |
+| Overview | Channel tabs (All, D2C, Marketplaces, Quick commerce); a one-line brief with the break-even gauge and top actions; "What moved CM2" lever bridge (demand, gross margin, logistics, marketplace fees, ad spend); 3D rupee flow; KPI tiles per channel; trend, ladder and ROAS lenses in a tabbed detail card |
 | Performance marketing | SCALE / HOLD / FIX / STOP / BRAND verdict per campaign with its working; ad spend vs stock by landing page |
 | Recommendations | Decision-engine observations to record or park; running experiments and the evidence library |
 | Creative library | Every ad that spent, browsable by picture, with QA flags ranked by the spend behind them |
@@ -75,7 +76,9 @@ screens the mock-ups did not have: Revenue reconciliation and Connectors.
 
 Also: date ranges (Today, Yesterday, 7D, MTD, 30D, 3M, Custom) with previous-period comparison,
 ⌘K search across screens, campaigns, products, metrics and order numbers, light and dark themes,
-phone layout, CSV export on the main tables, and shareable URLs (range and scope are in the hash).
+phone layout, CSV export on the main tables, and shareable URLs (range and channel are in the hash).
+The interface is dark-first glass with motion (3D tilt, count-up figures, charts that draw in,
+scroll reveals); all motion turns off under the system's reduced-motion setting.
 
 ### What is real and what is simulated
 
@@ -91,7 +94,7 @@ phone layout, CSV export on the main tables, and shareable URLs (range and scope
 
 ## 3. Run it
 
-Requires Node 20+.
+Requires Node 20 or newer (pinned in `package.json` engines).
 
 ```bash
 npm install

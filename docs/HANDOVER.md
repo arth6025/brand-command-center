@@ -9,7 +9,7 @@ the simulated data with real ingestion, put it behind auth, and deploy it.
 ```bash
 npm install
 npm run dev        # open http://localhost:5180
-npm test           # 19 tests on the money rules
+npm test           # 22 tests on the money rules
 npm run build      # must pass: strict TypeScript, no warnings
 ```
 
@@ -25,7 +25,7 @@ Then read, in this order:
 
 - 15 screens, routing, date ranges with previous-period comparison, search, theming, responsive layout.
 - Metric engine (`src/metrics/*`): pure functions over the warehouse tables, memoised per date range.
-- Rules covered by tests: the ladder reconciles, break-even = 1 ÷ CM1%, gaps are never zero, verdict invariants, the Trading Room solver, freshness detection, refused report joins.
+- Rules covered by tests: the ladder reconciles (for every channel group, and the groups sum to the total), the CM2 lever bridge sums exactly to the CM2 change, break-even = 1 ÷ CM1%, gaps are never zero, verdict invariants, the Trading Room solver, freshness detection, refused report joins.
 - Ask: payload builder (`src/ask/answer.ts`), local answerer, and a server proxy to Claude (`server/ask-proxy.mjs`).
 
 ## What you need to build
