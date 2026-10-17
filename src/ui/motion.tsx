@@ -102,7 +102,9 @@ export function Sparkline({ values, color = 'var(--series-1)' }: { values: numbe
   const x = (i: number) => (i / (pts.length - 1)) * w;
   const y = (v: number) => h - 3 - ((v - min) / (max - min || 1)) * (h - 6);
   const line = pts.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join('');
-  const id = `sp${Math.round(pts[0] * 1000) % 100000}${pts.length}`;
+  let hash = 0;
+  for (const ch of `${color}${pts.join(',')}`) hash = (hash * 31 + ch.charCodeAt(0)) | 0;
+  const id = `sp${(hash >>> 0).toString(36)}`;
   return (
     <svg className="spark" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" aria-hidden="true">
       <defs>

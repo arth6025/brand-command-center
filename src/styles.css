@@ -47,6 +47,12 @@
   --neutral-wash: rgba(255, 255, 255, 0.07);
 
   --series-1: #7c8cff;
+  --c-1: #3987e5;
+  --c-2: #d95926;
+  --c-3: #199e70;
+  --c-4: #c98500;
+  --c-5: #d55181;
+  --c-6: #9085e9;
   --series-2: #3fd3f2;
   --series-prev: #4a5373;
   --seq-0: rgba(255, 255, 255, 0.04);
@@ -102,6 +108,18 @@
     --info-ink: #08708a;
     --neutral-wash: rgba(20, 30, 80, 0.06);
     --series-1: #4b5cf0;
+  --c-1: #2a78d6;
+  --c-2: #eb6834;
+  --c-3: #1baf7a;
+  --c-4: #eda100;
+  --c-5: #e87ba4;
+  --c-6: #6250d6;
+    --c-1: #2a78d6;
+    --c-2: #eb6834;
+    --c-3: #1baf7a;
+    --c-4: #eda100;
+    --c-5: #e87ba4;
+    --c-6: #6250d6;
     --series-2: #0b9fc2;
     --series-prev: #b9bfd6;
     --seq-0: #eef0f8;
@@ -618,4 +636,50 @@ table.plan input:focus { border-color: var(--accent); background: var(--surface-
   .gauge { max-width: 240px; margin: 0 auto; }
   .wf-val { font-size: 9px; }
   .wf-label { font-size: 8.5px; }
+}
+
+/* ── Overview: channel tabs, levers, detail tabs ───────────────────────── */
+.ch-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+.ch-tab {
+  position: relative; text-align: left; cursor: pointer; border: 1px solid var(--hair); background: var(--surface);
+  backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 12px; padding: 11px 14px; display: flex; flex-direction: column; gap: 3px; min-width: 0;
+  transition: border-color 0.25s, transform 0.3s var(--ease), box-shadow 0.25s;
+}
+.ch-tab:hover { transform: translateY(-2px); border-color: var(--hair-strong); }
+.ch-tab[aria-selected='true'] { border-color: var(--ch, var(--accent)); box-shadow: 0 0 0 1px var(--ch, var(--accent)), 0 12px 30px -16px var(--ch, var(--glow)); }
+.ch-tab .ch-name { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--ink-2); font-weight: 560; }
+.ch-tab .ch-dot { width: 8px; height: 8px; border-radius: 3px; background: var(--ch, var(--accent)); box-shadow: 0 0 10px var(--ch, var(--glow)); }
+.ch-tab .ch-val { font: 640 19px/1.15 var(--display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.ch-tab .ch-meta { font-size: 11.5px; color: var(--ink-3); display: flex; gap: 8px; flex-wrap: wrap; }
+.ch-tab .ch-share { position: absolute; left: 14px; right: 14px; bottom: 0; height: 2px; border-radius: 2px; background: var(--surface-3); overflow: hidden; }
+.ch-tab .ch-share i { display: block; height: 100%; background: var(--ch, var(--accent)); transform-origin: left; animation: grow 0.9s var(--ease) both; }
+
+.bridge { display: flex; flex-direction: column; gap: 4px; }
+.bridge-row {
+  display: grid; grid-template-columns: minmax(110px, 1.1fr) minmax(0, 2fr) 76px; gap: 12px; align-items: center;
+  padding: 7px 8px; border-radius: 9px; border: 0; background: none; text-align: left; width: 100%; cursor: pointer;
+  transition: background 0.2s;
+}
+.bridge-row:hover { background: var(--surface-2); }
+.bridge-row.total { cursor: default; font-weight: 650; border-top: 1px solid var(--hair); border-radius: 0; margin-top: 2px; }
+.bridge-row.total:hover { background: none; }
+.bridge-row .b-label { font-size: 12.5px; }
+.bridge-row .b-sub { font-size: 11px; color: var(--ink-3); }
+.bridge-row .b-val { text-align: right; font: 600 12px var(--mono); }
+.b-track { position: relative; height: 12px; }
+.b-track::before { content: ''; position: absolute; left: 50%; top: -4px; bottom: -4px; width: 1px; background: var(--hair-strong); }
+.b-bar { position: absolute; top: 0; height: 100%; border-radius: 3px; animation: grow 0.9s var(--ease) both; }
+.b-bar.up { left: 50%; background: var(--good); box-shadow: 0 0 12px -2px var(--good); transform-origin: left; }
+.b-bar.down { right: 50%; background: var(--crit); box-shadow: 0 0 12px -2px var(--crit); transform-origin: right; }
+.b-bar.base { left: 0; background: var(--surface-3); transform-origin: left; }
+
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--hair); margin: -4px 0 14px; overflow-x: auto; }
+.tabs button { border: 0; background: none; padding: 8px 12px; cursor: pointer; color: var(--ink-3); font-weight: 560; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; transition: color 0.2s, border-color 0.2s; }
+.tabs button:hover { color: var(--ink); }
+.tabs button[aria-selected='true'] { color: var(--ink); border-color: var(--accent); }
+
+@media (max-width: 860px) {
+  .ch-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bridge-row { grid-template-columns: minmax(90px, 1fr) minmax(0, 1.4fr) 64px; gap: 8px; }
 }

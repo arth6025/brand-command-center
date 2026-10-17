@@ -60,10 +60,12 @@ export function Delta({ cur, prev, upIsGood = true, suffix = 'vs prev' }: { cur:
   );
 }
 
-export function Stat({ label, value, foot, source, metric, big, onClick, valueClass = '', spark }: {
+export function Stat({ label, value, foot, source, metric, big, onClick, valueClass = '', spark, color }: {
   label: ReactNode; value: ReactNode; foot?: ReactNode; source?: string; metric?: string; big?: boolean; onClick?: () => void; valueClass?: string;
   /** Optional trend values drawn as a sparkline under the figure. */
   spark?: number[];
+  /** Identity colour for the sparkline (a --c-n token). */
+  color?: string;
 }) {
   const { openMetric } = useApp();
   const tilt = useTilt<HTMLElement>(7);
@@ -75,7 +77,7 @@ export function Stat({ label, value, foot, source, metric, big, onClick, valueCl
         {source && <SourceChip label={source} metric={metric} />}
       </div>
       <div className={`stat-value ${big ? 'big' : ''} ${valueClass}`}>{typeof value === 'string' ? <CountUp value={value} /> : value}</div>
-      {spark && <Sparkline values={spark} />}
+      {spark && <Sparkline values={spark} color={color} />}
       {foot && <div className="stat-foot">{foot}</div>}
     </Card>
   );

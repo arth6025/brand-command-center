@@ -142,3 +142,30 @@ describe('every module computes without throwing for every preset', () => {
     expect(e.plan.board(plan).length).toBe(plan.length);
   });
 });
+
+describe('channel groups and the CM2 bridge', () => {
+  it('channel-group ladders add up to the all-channel ladder', () => {
+    const r = presetRange(e.cal, '30d');
+    const parts = (['website', 'marketplace', 'qc'] as const).map((s) => e.core.ladder(r, s));
+    const all = e.core.ladder(r, 'all');
+    for (const k of ['netRevenue', 'cogs', 'adSpend', 'cm1', 'cm2', 'marketplaceFees'] as const) {
+      expect(parts.reduce((a, l) => a + l[k], 0)).toBeCloseTo(all[k], 2);
+    }
+  });
+  it('every scope ladder reconciles', () => {
+    for (const scope of ['website', 'marketplace', 'qc'] as const) {
+      const l = e.core.ladder(presetRange(e.cal, '30d'), scope);
+      expect(l.cm1).toBeCloseTo(l.gm - l.freight - l.rto - l.paymentFees - l.marketplaceFees - (l.packaging ?? 0), 4);
+      expect(l.cm2).toBeCloseTo(l.cm1 - l.adSpend, 4);
+    }
+  });
+  it('bridge steps sum exactly to the CM2 change, for every scope and range', () => {
+    for (const scope of ['all', 'website', 'marketplace', 'qc'] as const) {
+      for (const p of ['7d', '30d', 'mtd'] as const) {
+        const r = presetRange(e.cal, p);
+        const b = e.core.cm2Bridge(r, previousRange(r), scope);
+        expect(b.from + b.steps.reduce((a, s) => a + s.value, 0)).toBeCloseTo(b.to, 2);
+      }
+    }
+  });
+});

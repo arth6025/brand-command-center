@@ -7,7 +7,38 @@ import type { AdDaily, ChannelDaily, Day, GatewayPayment, Order, Shipment, Wareh
 import { safeDiv } from './format';
 import { type Calendar, type DateRange, rangeKey } from './range';
 
-export type Scope = 'all' | 'website';
+/** Channel groups the Overview can focus on. `website` is the D2C storefront. */
+export type Scope = 'all' | 'website' | 'marketplace' | 'qc';
+
+const QC_CHANNELS = new Set(['blinkit', 'zepto', 'instamart']);
+const QC_AD_PLATFORMS = new Set(['blinkit_ads', 'zepto_ads', 'instamart_ads']);
+
+function includesWebsite(scope: Scope) {
+  return scope === 'all' || scope === 'website';
+}
+function includesChannel(scope: Scope, channel: string) {
+  if (scope === 'all') return true;
+  if (scope === 'qc') return QC_CHANNELS.has(channel);
+  if (scope === 'marketplace') return !QC_CHANNELS.has(channel);
+  return false;
+}
+function includesAdPlatform(scope: Scope, platform: string) {
+  if (scope === 'all') return true;
+  if (scope === 'qc') return QC_AD_PLATFORMS.has(platform);
+  if (scope === 'marketplace') return !QC_AD_PLATFORMS.has(platform);
+  return false;
+}
+
+/** One lever's contribution to the change in CM2 between two periods. */
+export interface BridgeStep {
+  key: 'demand' | 'gm' | 'logistics' | 'mkt' | 'ads';
+  label: string;
+  value: number;
+  /** Rate or level now vs before, for the label. */
+  now: number;
+  before: number;
+  unit: 'inr' | 'pct';
+}
 
 export interface LadderLine {
   key: string;
@@ -43,6 +74,19 @@ export interface Ladder {
   merGap: number | null;
   revenueNeeded: number | null;
 }
+
+const SCOPE_NOTE: Record<Scope, string> = {
+  all: 'all channels, ex-GST, after cancellations, RTO and returns',
+  website: 'website orders, ex-GST, after cancellations, RTO and returns',
+  marketplace: 'Amazon, Flipkart, Nykaa, Myntra: net sales ex-GST after returns',
+  qc: 'Blinkit, Zepto, Instamart: sell-in (PO value) ex-GST',
+};
+const ADS_NOTE: Record<Scope, string> = {
+  all: 'Meta + Google + Snapchat + marketplace + quick-commerce ads',
+  website: 'Meta + Google + Snapchat',
+  marketplace: 'Amazon Ads + Flipkart Ads',
+  qc: 'Blinkit, Zepto and Instamart ads',
+};
 
 /** Order counts toward revenue only once it is neither cancelled nor reversed. */
 export function isRecognised(o: Order) {
@@ -131,7 +175,7 @@ export class Core {
     let shippedOrders = 0;
     const unbilledCutoff = this.w.today - 1; // couriers bill a day later
 
-    for (const o of this.orders(r)) {
+    for (const o of includesWebsite(scope) ? this.orders(r) : []) {
       if (o.status === 'cancelled') continue;
       const ship = this.shipByOrder.get(o.id);
       shippedOrders++;
@@ -169,9 +213,10 @@ export class Core {
     }
 
     let mktFees = 0;
-    let adSpend = this.websiteAdSpend(r);
-    if (scope === 'all') {
+    let adSpend = includesWebsite(scope) ? this.websiteAdSpend(r) : 0;
+    if (scope !== 'website') {
       for (const c of this.channelRows(r)) {
+        if (!includesChannel(scope, c.channel)) continue;
         const recognised = c.netRevenue - c.returnsValue;
         net += recognised;
         gross += c.gmv;
@@ -184,7 +229,7 @@ export class Core {
         }
         mktFees += c.commission + c.logistics;
       }
-      for (const a of this.channelAds(r)) adSpend += a.spend;
+      for (const a of this.channelAds(r)) if (includesAdPlatform(scope, a.platform)) adSpend += a.spend;
     }
 
     const coverage = units ? costedUnits / units : 1;
@@ -198,18 +243,18 @@ export class Core {
     const merGap = blendedMer !== null && breakEvenMer !== null ? blendedMer - breakEvenMer : null;
 
     const lines: LadderLine[] = [
-      { key: 'net', label: 'Net revenue', value: net, kind: 'total', note: scope === 'all' ? 'all channels, ex-GST, after cancellations, RTO and returns' : 'website orders, ex-GST, after cancellations, RTO and returns' },
+      { key: 'net', label: 'Net revenue', value: net, kind: 'total', note: SCOPE_NOTE[scope] },
       { key: 'cogs', label: '− COGS', value: cogs, kind: 'deduct', note: `dated cost per SKU on the order date · ${Math.round(coverage * 100)}% of units costed` },
       { key: 'gm', label: 'GM', value: gm, kind: 'total', note: 'after goods' },
       { key: 'freight', label: '− Freight · COD fees', value: freight, kind: 'deduct', note: 'courier invoices; governed rate for orders not yet billed', realShare: freight ? freightReal / freight : 1 },
       { key: 'rto', label: '− RTO', value: rto, kind: 'deduct', note: 'return freight on RTO parcels; governed provision on unbilled COD' },
       { key: 'fees', label: '− Payment fees', value: fees, kind: 'deduct', note: 'Razorpay fee per capture', realShare: fees ? 1 - feesGov / fees : 1 },
     ];
-    if (scope === 'all') lines.push({ key: 'mkt', label: '− Marketplace commission · logistics', value: mktFees, kind: 'deduct', note: 'settlement fees from SP-API, seller APIs and portal reports' });
+    if (scope !== 'website') lines.push({ key: 'mkt', label: '− Marketplace commission · logistics', value: mktFees, kind: 'deduct', note: 'settlement fees from SP-API, seller APIs and portal reports' });
     lines.push(
       { key: 'packaging', label: '− Packaging', value: packaging, kind: packaging === null ? 'gap' : 'deduct', note: packaging === null ? 'not set: ₹0 means not set, not free' : 'governed rate per shipped order' },
       { key: 'cm1', label: 'CM1', value: cm1, kind: 'total', note: 'break-even MER = 1 ÷ CM1%' },
-      { key: 'ads', label: '− Ad spend (all platforms)', value: adSpend, kind: 'deduct', note: scope === 'all' ? 'Meta + Google + Snapchat + marketplace + quick-commerce ads' : 'Meta + Google + Snapchat' },
+      { key: 'ads', label: '− Ad spend (all platforms)', value: adSpend, kind: 'deduct', note: ADS_NOTE[scope] },
       { key: 'cm2', label: 'CM2', value: cm2, kind: 'total', note: 'after marketing' },
     );
 
@@ -218,6 +263,50 @@ export class Core {
       paymentFees: fees, marketplaceFees: mktFees, packaging, cm1, adSpend, cm2, lines, cm1Pct, breakEvenMer,
       blendedMer, merGap, revenueNeeded: breakEvenMer !== null ? adSpend * breakEvenMer : null,
     };
+  }
+
+  /**
+   * What moved CM2 between `prev` and `r`. Exact decomposition:
+   *   ΔCM2 = ΔRevenue × CM1%_prev            (demand)
+   *        + Revenue_now × ΔGM%              (gross margin)
+   *        − Revenue_now × ΔLogistics%       (freight, RTO, payment fees, packaging)
+   *        − Revenue_now × ΔMarketplace-fee% (commission, marketplace logistics)
+   *        − ΔAd spend                       (ads)
+   * so the bars always sum to the actual change.
+   */
+  cm2Bridge(r: DateRange, prev: DateRange, scope: Scope) {
+    const a = this.ladder(prev, scope);
+    const b = this.ladder(r, scope);
+    const rate = (x: number, rev: number) => (rev ? x / rev : 0);
+    const logi = (l: Ladder) => l.freight + l.rto + l.paymentFees + (l.packaging ?? 0);
+    const cm1pA = rate(a.cm1, a.netRevenue);
+    const steps: BridgeStep[] = [
+      { key: 'demand', label: 'Demand', value: (b.netRevenue - a.netRevenue) * cm1pA, now: b.netRevenue, before: a.netRevenue, unit: 'inr' },
+      { key: 'gm', label: 'Gross margin', value: b.netRevenue * (rate(b.gm, b.netRevenue) - rate(a.gm, a.netRevenue)), now: rate(b.gm, b.netRevenue), before: rate(a.gm, a.netRevenue), unit: 'pct' },
+      { key: 'logistics', label: 'Logistics & fees', value: -b.netRevenue * (rate(logi(b), b.netRevenue) - rate(logi(a), a.netRevenue)), now: rate(logi(b), b.netRevenue), before: rate(logi(a), a.netRevenue), unit: 'pct' },
+      { key: 'mkt', label: 'Marketplace fees', value: -b.netRevenue * (rate(b.marketplaceFees, b.netRevenue) - rate(a.marketplaceFees, a.netRevenue)), now: rate(b.marketplaceFees, b.netRevenue), before: rate(a.marketplaceFees, a.netRevenue), unit: 'pct' },
+      { key: 'ads', label: 'Ad spend', value: -(b.adSpend - a.adSpend), now: b.adSpend, before: a.adSpend, unit: 'inr' },
+    ];
+    return { from: a.cm2, to: b.cm2, steps: steps.filter((s) => s.key !== 'mkt' || scope !== 'website') };
+  }
+
+  /** Marketplace / quick-commerce KPIs from channel rows and channel ads. */
+  groupKpis(r: DateRange, scope: 'marketplace' | 'qc') {
+    return this.cached(`gk:${scope}:${rangeKey(r)}`, () => {
+      let units = 0, gmv = 0, net = 0, returns = 0, commission = 0, logistics = 0, ads = 0, attributed = 0;
+      for (const c of this.channelRows(r)) {
+        if (!includesChannel(scope, c.channel)) continue;
+        units += c.units; gmv += c.gmv; net += c.netRevenue; returns += c.returnsValue; commission += c.commission; logistics += c.logistics;
+      }
+      for (const a of this.channelAds(r)) if (includesAdPlatform(scope, a.platform)) { ads += a.spend; attributed += a.attributedSales; }
+      return {
+        units, gmv, net, ads,
+        commissionRate: safeDiv(commission + logistics, net),
+        returnRate: safeDiv(returns, net),
+        acos: safeDiv(ads, attributed),
+        adRoas: safeDiv(attributed, ads),
+      };
+    });
   }
 
   /** Website KPIs from Shopify. */
@@ -247,8 +336,8 @@ export class Core {
           continue;
         }
         let v = 0;
-        for (const o of this.ordersByDay[d]) if (isRecognised(o)) v += o.net;
-        if (scope === 'all') for (const c of this.chByDay[d]) v += c.netRevenue - c.returnsValue;
+        if (includesWebsite(scope)) for (const o of this.ordersByDay[d]) if (isRecognised(o)) v += o.net;
+        if (scope !== 'website') for (const c of this.chByDay[d]) if (includesChannel(scope, c.channel)) v += c.netRevenue - c.returnsValue;
         out.push({ day: d, value: v });
       }
       return out;
