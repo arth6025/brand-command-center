@@ -99,7 +99,10 @@ npm run dev          # http://localhost:5180
 npm test             # metric engine tests
 npm run build        # typecheck + production bundle in dist/
 npm run ask-server   # optional: Claude-backed Ask on :8787 (needs ANTHROPIC_API_KEY)
+npm run build:artifact  # single-file HTML (dist-artifact/) for sharing as a Claude artifact, branded "Demo Brand"
 ```
+
+Shareable prototype (Claude artifact, simulated data): https://claude.ai/artifact/E7vVB3UCfmMEyaoagJyuEv. The brand name comes from `VITE_BRAND_NAME` (default Arata).
 
 ---
 

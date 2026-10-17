@@ -554,7 +554,7 @@ export function generateWarehouse(seed = 20261016): Warehouse {
   ];
 
   return {
-    brand: { name: 'Arata', category: 'Hair care · regimen' },
+    brand: { name: (import.meta.env?.VITE_BRAND_NAME as string | undefined) || 'Arata', category: 'Hair care · regimen' },
     day0: DAY0_UTC - IST_OFFSET_MS,
     today: TODAY,
     todayElapsed: TODAY_ELAPSED,

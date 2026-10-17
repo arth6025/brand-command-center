@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
-    "ask-server": "node server/ask-proxy.mjs"
+    "ask-server": "node server/ask-proxy.mjs",
+    "build:artifact": "VITE_BRAND_NAME='Demo Brand' vite build --config vite.artifact.config.ts && node scripts/build-artifact.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.135.0",

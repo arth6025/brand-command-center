@@ -28,7 +28,7 @@ export default function Reconciliation() {
       <PageHead
         title="Revenue reconciliation"
         sub={`${describeRange(engine.cal, range)} · does every rupee booked turn into cash? Prepaid via the gateway, COD via courier remittance, marketplaces via settlements`}
-        actions={<Badge tone="outline">New for Arata</Badge>}
+        actions={<Badge tone="outline">New</Badge>}
       />
 
       <div className="grid g4">
