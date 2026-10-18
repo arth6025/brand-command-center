@@ -1,5 +1,7 @@
 # Brand Command Center
 
+**Live preview:** https://claude.ai/artifact/E7vVB3UCfmMEyaoagJyuEv (the full app on simulated data, branded "Demo Brand")
+
 An internal finance and operating command center for D2C brands. One screen
 tells a founder or finance lead whether marketing is above break-even, what the
 business earns after ad spend, where cash is stuck, and what someone should do
